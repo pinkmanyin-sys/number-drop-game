@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Tween } from 'cc';
 import { NetworkManager } from './NetworkManager';
+import { UserManager } from './UserManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -18,6 +19,7 @@ export class GameManager extends Component {
     private currentBlockX = 3;
     private dropTween: Tween<Node> = null;
     private uiManager: any;
+    private reviveCount = 0;
     private gameOver = false;
     
     start() {
@@ -85,7 +87,7 @@ export class GameManager extends Component {
             if (this.isValidPosition(newX, newY) && 
                 this.gameGrid[newY][newX] === currentNumber) {
                 this.mergeBlocks(x, y, newX, newY);
-                this.uiManager.addScore(currentNumber * 2);
+                this.addScore(currentNumber * 2);
             }
         }
     }
@@ -136,15 +138,41 @@ export class GameManager extends Component {
         this.gameOver = true;
         if (this.dropTween) this.dropTween.stop();
         this.uiManager.showGameOver();
-        NetworkManager.getInstance().saveScore('player1', this.uiManager.getScore());
+        
+        // 只有登录用户才保存分数
+        if (UserManager.getInstance().isUserLoggedIn()) {
+            const userId = UserManager.getInstance().getUserId();
+            NetworkManager.getInstance().saveScore(userId, this.currentScore, this.reviveCount);
+        }
     }
     
     restart() {
         this.gameOver = false;
+        this.reviveCount = 0;
+        this.currentScore = 0;
         this.initGrid();
         if (this.currentBlock) {
             this.currentBlock.destroy();
         }
         this.spawnBlock();
+    }
+    
+    revive() {
+        if (UserManager.getInstance().isUserLoggedIn()) {
+            this.reviveCount++;
+            this.gameOver = false;
+            this.spawnBlock();
+        }
+    }
+    
+    addScore(points: number) {
+        this.currentScore += points;
+        if (this.uiManager) {
+            this.uiManager.updateScore(this.currentScore);
+        }
+    }
+    
+    getCurrentScore(): number {
+        return this.currentScore;
     }
 }

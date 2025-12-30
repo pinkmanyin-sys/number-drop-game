@@ -1,0 +1,32 @@
+{
+  "name": "2048 Drop",
+  "version": "1.0.0",
+  "description": "TikTok 2048 Drop Mini Game",
+  "main": "index.html",
+  "appid": "你的实际App ID",
+  "gameConfig": {
+    "deviceOrientation": "portrait",
+    "showStatusBar": false,
+    "networkTimeout": 20000,
+    "subpackages": [],
+    "resizable": false
+  },
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#667eea",
+    "navigationBarTitleText": "2048 Drop",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "networkTimeout": {
+    "request": 10000,
+    "downloadFile": 10000
+  },
+  "requiredBackgroundModes": [],
+  "permission": {
+    "scope.userInfo": {
+      "desc": "Display username in leaderboard"
+    }
+  },
+  "debug": false
+}

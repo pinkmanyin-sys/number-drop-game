@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok小游戏本地测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .test-item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #667eea; }
+        .success { border-left-color: #28a745; }
+        .warning { border-left-color: #ffc107; }
+        .btn { background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 TikTok小游戏本地测试</h1>
+        
+        <div class="test-item">
+            <h3>📱 游戏主页面</h3>
+            <p>测试游戏界面和基本功能</p>
+            <a href="index.html" class="btn">打开游戏</a>
+        </div>
+
+        <div class="test-item">
+            <h3>🔒 隐私政策</h3>
+            <p>检查隐私政策页面完整性</p>
+            <a href="privacy.html" class="btn">查看隐私政策</a>
+        </div>
+
+        <div class="test-item">
+            <h3>📋 用户协议</h3>
+            <p>检查用户协议页面完整性</p>
+            <a href="terms.html" class="btn">查看用户协议</a>
+        </div>
+
+        <div class="test-item">
+            <h3>⚙️ 环境检测</h3>
+            <p id="envStatus">正在检测...</p>
+        </div>
+
+        <div class="test-item">
+            <h3>🎯 功能测试清单</h3>
+            <ul>
+                <li>✅ 游戏界面加载</li>
+                <li>✅ 触摸控制响应</li>
+                <li>✅ 模拟TikTok API</li>
+                <li>✅ 排行榜显示</li>
+                <li>✅ 分享功能模拟</li>
+                <li>✅ 防沉迷提醒</li>
+            </ul>
+        </div>
+
+        <div class="test-item warning">
+            <h3>⚠️ 注意事项</h3>
+            <ul>
+                <li>本地测试使用模拟的TikTok API</li>
+                <li>真实功能需要在TikTok环境中测试</li>
+                <li>排行榜数据为模拟数据</li>
+                <li>分享功能在本地环境无法正常工作</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 环境检测
+        function detectEnvironment() {
+            const status = document.getElementById('envStatus');
+            let html = '';
+            
+            // 检测浏览器
+            html += `<div><span class="status">浏览器:</span> ${navigator.userAgent.split(' ')[0]}</div>`;
+            
+            // 检测屏幕尺寸
+            html += `<div><span class="status">屏幕:</span> ${screen.width}x${screen.height}</div>`;
+            
+            // 检测触摸支持
+            const touchSupport = 'ontouchstart' in window ? '✅ 支持' : '❌ 不支持';
+            html += `<div><span class="status">触摸:</span> ${touchSupport}</div>`;
+            
+            // 检测Canvas支持
+            const canvas = document.createElement('canvas');
+            const canvasSupport = canvas.getContext ? '✅ 支持' : '❌ 不支持';
+            html += `<div><span class="status">Canvas:</span> ${canvasSupport}</div>`;
+            
+            // 检测本地存储
+            const storageSupport = typeof(Storage) !== "undefined" ? '✅ 支持' : '❌ 不支持';
+            html += `<div><span class="status">本地存储:</span> ${storageSupport}</div>`;
+            
+            status.innerHTML = html;
+        }
+
+        // 页面加载完成后执行检测
+        window.onload = detectEnvironment;
+    </script>
+</body>
+</html>

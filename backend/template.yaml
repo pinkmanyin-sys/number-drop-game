@@ -17,7 +17,25 @@ Resources:
       CodeUri: ./
       Handler: index.handler
       Runtime: nodejs18.x
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GameAPI
+            Path: /register
+            Method: post
+        LoginUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GameAPI
+            Path: /login
+            Method: post
         SaveScore:
           Type: Api
           Properties:
@@ -31,22 +49,22 @@ Resources:
             Path: /leaderboard
             Method: get
 
-  GameScoresTable:
+  UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: GameScores
+      TableName: Users
       AttributeDefinitions:
         - AttributeName: userId
           AttributeType: S
-        - AttributeName: score
-          AttributeType: N
+        - AttributeName: username
+          AttributeType: S
       KeySchema:
         - AttributeName: userId
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: ScoreIndex
+        - IndexName: UsernameIndex
           KeySchema:
-            - AttributeName: score
+            - AttributeName: username
               KeyType: HASH
           Projection:
             ProjectionType: ALL

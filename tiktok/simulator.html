@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>TikTok小游戏模拟器</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #000; color: white; }
+        .simulator { max-width: 375px; margin: 0 auto; background: #111; border-radius: 20px; overflow: hidden; }
+        .status-bar { background: #000; padding: 10px; text-align: center; font-size: 12px; }
+        .game-frame { width: 375px; height: 667px; border: none; }
+        .controls { padding: 20px; background: #222; }
+        .btn { background: #fe2c55; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="simulator">
+        <div class="status-bar">📱 TikTok小游戏模拟器 - 9:41 AM 🔋100%</div>
+        <iframe src="index.html" class="game-frame" id="gameFrame"></iframe>
+        <div class="controls">
+            <h3>🎮 TikTok功能模拟</h3>
+            <button class="btn" onclick="simulateShare()">📤 模拟分享</button>
+            <button class="btn" onclick="simulateAd()">📺 模拟广告</button>
+            <button class="btn" onclick="simulateLeaderboard()">🏆 模拟排行榜</button>
+            <button class="btn" onclick="simulateUser()">👤 切换用户</button>
+        </div>
+    </div>
+
+    <script>
+        function simulateShare() {
+            alert('🎉 分享成功！\n已分享到TikTok动态');
+        }
+
+        function simulateAd() {
+            alert('📺 广告播放中...\n(3秒后自动关闭)');
+            setTimeout(() => {
+                alert('✅ 广告播放完成！\n获得复活机会');
+            }, 3000);
+        }
+
+        function simulateLeaderboard() {
+            const mockData = [
+                '🥇 TikTokUser1 - 2048分',
+                '🥈 TikTokUser2 - 1536分', 
+                '🥉 TikTokUser3 - 1024分',
+                '4️⃣ 你 - 512分',
+                '5️⃣ TikTokUser5 - 256分'
+            ];
+            alert('🏆 全球排行榜\n\n' + mockData.join('\n'));
+        }
+
+        function simulateUser() {
+            const users = ['TestUser', 'TikTokGamer', 'NumberMaster', 'GamePro'];
+            const user = users[Math.floor(Math.random() * users.length)];
+            alert('👤 切换用户: ' + user);
+        }
+    </script>
+</body>
+</html>

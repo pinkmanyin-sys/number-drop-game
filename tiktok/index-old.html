@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>数字掉落合并游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 375px;
+            height: 667px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #667eea;
+        }
+        
+        .loading h2 {
+            margin-bottom: 20px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .controls p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="loading" id="loading">
+            <h2>数字掉落合并游戏</h2>
+            <div class="spinner"></div>
+            <p>正在加载...</p>
+        </div>
+        
+        <canvas id="gameCanvas" style="display: none;"></canvas>
+        
+        <div id="gameUI" style="display: none; position: absolute; top: 10px; left: 10px; right: 10px; z-index: 10;">
+            <div style="background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
+                <div id="scoreDisplay" style="font-size: 20px; font-weight: bold; color: #667eea;">分数: 0</div>
+                <div id="playerName" style="font-size: 14px; color: #666;">玩家: Guest</div>
+            </div>
+            <div style="text-align: center;">
+                <button id="startBtn" onclick="startGame()" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer;">开始游戏</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <p>👆 左右滑动移动方块</p>
+            <p>👇 向下滑动加速下落</p>
+            <p>🎯 相同数字自动合并</p>
+            <p><a href="privacy.html" style="color: #667eea; text-decoration: none;">隐私政策</a> | <a href="terms.html" style="color: #667eea; text-decoration: none;">用户协议</a></p>
+        </div>
+    </div>
+
+    <script>
+        // 检查TikTok环境
+        if (typeof tt !== 'undefined') {
+            // TikTok小游戏环境
+            console.log('TikTok小游戏环境');
+            
+            // 启动游戏
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('gameCanvas').style.display = 'block';
+                document.getElementById('gameUI').style.display = 'block';
+                
+                const script = document.createElement('script');
+                script.src = 'game.js';
+                document.head.appendChild(script);
+            }, 2000);
+            
+        } else {
+            // 浏览器环境 - 模拟TikTok API
+            console.log('浏览器环境 - 模拟模式');
+            
+            // 模拟TikTok API
+            window.tt = {
+                getUserInfo: function(options) {
+                    setTimeout(() => {
+                        options.success({
+                            userInfo: {
+                                nickName: 'TestUser',
+                                avatarUrl: ''
+                            }
+                        });
+                    }, 1000);
+                },
+                
+                onShow: function(callback) {
+                    window.addEventListener('focus', callback);
+                },
+                
+                onHide: function(callback) {
+                    window.addEventListener('blur', callback);
+                },
+                
+                createCanvas: function() {
+                    return document.getElementById('gameCanvas');
+                },
+                
+                setUserCloudStorage: function(options) {
+                    console.log('模拟保存数据:', options);
+                    localStorage.setItem('gameData', JSON.stringify(options.KVDataList));
+                    if (options.success) options.success();
+                },
+                
+                getFriendCloudStorage: function(options) {
+                    console.log('模拟获取好友数据');
+                    const mockData = [
+                        {
+                            nickname: 'Player1',
+                            avatarUrl: '',
+                            KVDataList: [{ key: 'score', value: '1500' }]
+                        },
+                        {
+                            nickname: 'Player2', 
+                            avatarUrl: '',
+                            KVDataList: [{ key: 'score', value: '1200' }]
+                        }
+                    ];
+                    
+                    setTimeout(() => {
+                        if (options.success) options.success({ data: mockData });
+                    }, 500);
+                },
+                
+                getGroupCloudStorage: function(options) {
+                    console.log('模拟获取群组数据');
+                    if (options.success) options.success({ data: [] });
+                },
+                
+                showModal: function(options) {
+                    const result = confirm(options.content);
+                    if (options.success) {
+                        options.success({
+                            confirm: result,
+                            cancel: !result
+                        });
+                    }
+                },
+                
+                shareAppMessage: function(options) {
+                    console.log('模拟分享:', options);
+                    alert('分享功能在TikTok环境中可用');
+                    if (options.success) options.success();
+                },
+                
+                postMessage: function(data) {
+                    console.log('发送消息:', data);
+                }
+            };
+            
+            // 启动游戏
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('gameCanvas').style.display = 'block';
+                document.getElementById('gameUI').style.display = 'block';
+                
+                const script = document.createElement('script');
+                script.src = 'game.js';
+                document.head.appendChild(script);
+            }, 2000);
+        }
+        
+        // 游戏控制函数
+        function startGame() {
+            if (window.game) {
+                window.game.startGame();
+                document.getElementById('startBtn').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

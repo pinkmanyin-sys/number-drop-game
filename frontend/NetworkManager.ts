@@ -1,6 +1,6 @@
 export class NetworkManager {
     private static instance: NetworkManager;
-    private apiUrl = 'http://localhost:3000'; // 本地开发服务器
+    private apiUrl = 'https://your-api-gateway-url.amazonaws.com/prod';
     
     static getInstance(): NetworkManager {
         if (!NetworkManager.instance) {
@@ -9,14 +9,44 @@ export class NetworkManager {
         return NetworkManager.instance;
     }
     
-    async saveScore(userId: string, score: number): Promise<boolean> {
+    async post(endpoint: string, data: any): Promise<any> {
         try {
-            const response = await fetch(`${this.apiUrl}/score`, {
+            const response = await fetch(`${this.apiUrl}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, score, timestamp: Date.now() })
+                body: JSON.stringify(data)
             });
-            return response.ok;
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Network request failed:', error);
+            throw error;
+        }
+    }
+    
+    async get(endpoint: string): Promise<any> {
+        try {
+            const response = await fetch(`${this.apiUrl}${endpoint}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Network request failed:', error);
+            throw error;
+        }
+    }
+    
+    async saveScore(userId: string, score: number, reviveUsed: number = 0): Promise<boolean> {
+        try {
+            await this.post('/score', { userId, score, reviveUsed });
+            return true;
         } catch (error) {
             console.error('Save score failed:', error);
             return false;
@@ -25,8 +55,7 @@ export class NetworkManager {
     
     async getLeaderboard(): Promise<any[]> {
         try {
-            const response = await fetch(`${this.apiUrl}/leaderboard`);
-            return response.ok ? await response.json() : [];
+            return await this.get('/leaderboard');
         } catch (error) {
             console.error('Get leaderboard failed:', error);
             return [];

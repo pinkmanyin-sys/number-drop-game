@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>2048 Drop</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 375px;
+            height: 667px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #667eea;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="loading" id="loading">
+            <h2>2048 Drop</h2>
+            <div class="spinner"></div>
+            <p>Loading...</p>
+        </div>
+        
+        <!-- 开始页面 -->
+        <div id="startScreen" style="display: none; padding: 30px; text-align: center; height: 100%; box-sizing: border-box;">
+            <h2 style="color: #667eea; margin-bottom: 40px;">🎮 2048 Drop</h2>
+            
+            <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin-bottom: 30px;">
+                <h3 style="margin-bottom: 20px;">🎯 How to Play</h3>
+                <p style="margin: 10px 0;">👆 Swipe left/right to move blocks</p>
+                <p style="margin: 10px 0;">👇 Swipe down to drop faster</p>
+                <p style="margin: 10px 0;">🔢 Same numbers merge automatically</p>
+            </div>
+            
+            <button onclick="enterGame()" style="background: #28a745; color: white; border: none; padding: 18px 36px; border-radius: 12px; font-size: 20px; cursor: pointer; margin-bottom: 40px;">Start Game</button>
+            
+            <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; font-size: 12px; color: #666; text-align: center;">
+                <a href="privacy.html" style="color: #667eea; text-decoration: none; margin: 0 15px;">Privacy Policy</a> | 
+                <a href="terms.html" style="color: #667eea; text-decoration: none; margin: 0 15px;">Terms of Service</a>
+            </div>
+        </div>
+
+        <!-- 游戏页面 -->
+        <canvas id="gameCanvas" style="display: none;"></canvas>
+    </div>
+
+    <script>
+        // 检查TikTok环境
+        if (typeof tt !== 'undefined') {
+            console.log('TikTok小游戏环境');
+            initGame();
+        } else {
+            console.log('浏览器环境 - 模拟模式');
+            
+            // 模拟TikTok API
+            window.tt = {
+                getUserInfo: function(options) {
+                    setTimeout(() => {
+                        options.success({
+                            userInfo: {
+                                nickName: 'TestUser',
+                                avatarUrl: ''
+                            }
+                        });
+                    }, 1000);
+                },
+                
+                onShow: function(callback) {
+                    window.addEventListener('focus', callback);
+                },
+                
+                onHide: function(callback) {
+                    window.addEventListener('blur', callback);
+                },
+                
+                createCanvas: function() {
+                    return document.getElementById('gameCanvas');
+                },
+                
+                setUserCloudStorage: function(options) {
+                    console.log('模拟保存数据:', options);
+                    localStorage.setItem('gameData', JSON.stringify(options.KVDataList));
+                    if (options.success) options.success();
+                },
+                
+                getFriendCloudStorage: function(options) {
+                    console.log('模拟获取好友数据');
+                    const mockData = [
+                        {
+                            nickname: 'Player1',
+                            avatarUrl: '',
+                            KVDataList: [{ key: 'score', value: '1500' }]
+                        },
+                        {
+                            nickname: 'Player2', 
+                            avatarUrl: '',
+                            KVDataList: [{ key: 'score', value: '1200' }]
+                        }
+                    ];
+                    
+                    setTimeout(() => {
+                        if (options.success) options.success({ data: mockData });
+                    }, 500);
+                },
+                
+                getGroupCloudStorage: function(options) {
+                    console.log('模拟获取群组数据');
+                    if (options.success) options.success({ data: [] });
+                },
+                
+                showModal: function(options) {
+                    // 不使用confirm，直接调用游戏的自定义对话框
+                    console.log('模拟显示对话框:', options);
+                    // 什么都不做，让游戏自己处理
+                },
+                
+                createRewardedVideoAd: function(options) {
+                    console.log('模拟创建激励广告');
+                    const mockAd = {
+                        onLoad: function(callback) {
+                            setTimeout(callback, 1000);
+                        },
+                        onClose: function(callback) {
+                            setTimeout(() => {
+                                callback({ isEnded: true }); // 模拟看完广告
+                            }, 3000);
+                        },
+                        onError: function(callback) {
+                            // 模拟不出错
+                        },
+                        show: function() {
+                            alert('模拟广告播放中...（3秒后自动关闭）');
+                        }
+                    };
+                    if (options.success) options.success(mockAd);
+                },
+                
+                showToast: function(options) {
+                    alert(options.title);
+                },
+                
+                getOpenDataContext: function() {
+                    return {
+                        postMessage: function(data) {
+                            console.log('发送排行榜消息:', data);
+                        }
+                    };
+                },
+                
+                shareAppMessage: function(options) {
+                    console.log('模拟分享:', options);
+                    alert('分享功能在TikTok环境中可用');
+                    if (options.success) options.success();
+                },
+                
+                postMessage: function(data) {
+                    console.log('发送消息:', data);
+                }
+            };
+            
+            initGame();
+        }
+        
+        function initGame() {
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('startScreen').style.display = 'block';
+            }, 2000);
+        }
+        
+        function enterGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            
+            const script = document.createElement('script');
+            script.src = 'game.js';
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>
