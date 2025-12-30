@@ -1,0 +1,22 @@
+# 依赖文件
+node_modules/
+npm-debug.log*
+
+# 构建输出
+build/
+dist/
+*.log
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>数字掉落游戏 - 测试版</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial; background: #faf8ef; }
+        .game-container { max-width: 400px; margin: 0 auto; text-align: center; }
+        .game-board { 
+            width: 320px; height: 477px; 
+            border: 2px solid #bbada0; 
+            margin: 20px auto; 
+            position: relative; 
+            background: #cdc1b4;
+        }
+        .block { 
+            position: absolute; 
+            width: 50px; height: 50px; 
+            border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px;
+            transition: all 0.3s;
+        }
+        .controls { margin: 20px 0; }
+        button { 
+            padding: 10px 20px; margin: 5px; 
+            font-size: 16px; border: none; 
+            border-radius: 6px; cursor: pointer;
+            background: #8f7a66; color: white;
+        }
+        button:hover { background: #9f8a76; }
+        .score { font-size: 24px; font-weight: bold; color: #776e65; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>数字掉落游戏</h1>
+        <div class="score">分数: <span id="score">0</span></div>
+        <div class="game-board" id="gameBoard"></div>
+        <div class="controls">
+            <button onclick="moveLeft()">←</button>
+            <button onclick="drop()">↓</button>
+            <button onclick="moveRight()">→</button>
+            <br>
+            <button onclick="restart()">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let currentBlock = null;
+        let currentX = 3;
+        let currentY = 0;
+        let gameBoard = Array(10).fill().map(() => Array(6).fill(0)); // 10行，第0行隐藏
+        let placedBlocks = [];
+        let dropInterval = null;
+        let dropSpeed = 500;
+        
+        const colors = {
+            2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 
+            16: '#f59563', 32: '#f67c5f', 64: '#f65e3b',
+            128: '#edcf72', 256: '#edcc61', 512: '#edc850',
+            1024: '#edc53f', 2048: '#edc22e'
+        };
+        
+        function createBlock(number) {
+            const block = document.createElement('div');
+            block.className = 'block';
+            block.textContent = number;
+            block.style.backgroundColor = colors[number] || '#3c3a32';
+            block.style.color = number <= 4 ? '#776e65' : 'white';
+            return block;
+        }
+        
+        function spawnBlock() {
+            // 检查游戏是否结束
+            if (checkGameOver()) {
+                alert('游戏结束！最终分数: ' + score);
+                restart();
+                return;
+            }
+            
+            const numbers = [2, 4, 8, 16];
+            const number = numbers[Math.floor(Math.random() * numbers.length)];
+            currentBlock = createBlock(number);
+            currentX = 3;
+            currentY = 0;
+            updateBlockPosition();
+            document.getElementById('gameBoard').appendChild(currentBlock);
+            
+            // 检查生成位置是否被占用
+            if (gameBoard[0][currentX] !== 0) {
+                alert('游戏结束！最终分数: ' + score);
+                restart();
+                return;
+            }
+            
+            dropBlock();
+        }
+        
+        function updateBlockPosition() {
+            if (currentBlock) {
+                currentBlock.style.left = (currentX * 53) + 'px';
+                // 隐藏第0行，从第1行开始显示
+                currentBlock.style.top = ((currentY - 1) * 53) + 'px';
+                // 如果在隐藏行，不显示
+                currentBlock.style.display = currentY === 0 ? 'none' : 'flex';
+            }
+        }
+        
+        function dropBlock() {
+            currentY = 0;
+            dropSpeed = 500;
+            
+            dropInterval = setInterval(() => {
+                // 先移动，再检查
+                currentY++;
+                if (currentBlock) {
+                    currentBlock.style.top = ((currentY - 1) * 53) + 'px';
+                    // 从第1行开始显示
+                    currentBlock.style.display = currentY >= 1 ? 'flex' : 'none';
+                }
+                
+                // 检查是否到达底部或碰到障碍物
+                if (currentY >= 9 || (currentY < 9 && gameBoard[currentY + 1][currentX] !== 0)) {
+                    clearInterval(dropInterval);
+                    placeBlock();
+                    
+                    setTimeout(() => {
+                        checkMerge();
+                        applyGravity();
+                        
+                        if (checkGameOver()) {
+                            alert('游戏结束！最终分数: ' + score);
+                            restart();
+                            return;
+                        }
+                        
+                        spawnBlock();
+                    }, 100);
+                }
+            }, dropSpeed);
+        }
+        
+        function placeBlock() {
+            if (currentBlock) {
+                const number = parseInt(currentBlock.textContent);
+                gameBoard[currentY][currentX] = number;
+                
+                placedBlocks.push({
+                    element: currentBlock,
+                    x: currentX,
+                    y: currentY,
+                    number: number
+                });
+                
+                currentBlock = null;
+            }
+        }
+        
+        function checkMerge() {
+            let merged = true;
+            
+            // 持续检查合并直到没有可合并的
+            while (merged) {
+                merged = false;
+                
+                for (let y = 9; y >= 1; y--) { // 从第9行到第1行，跳过隐藏行
+                    for (let x = 0; x < 6; x++) {
+                        if (gameBoard[y][x] === 0) continue;
+                        
+                        const currentNumber = gameBoard[y][x];
+                        
+                        // 检查下方是否有相同数字
+                        if (y + 1 < 10 && gameBoard[y + 1][x] === currentNumber) {
+                            mergeBlocks(x, y, x, y + 1);
+                            merged = true;
+                        }
+                        // 检查右方是否有相同数字
+                        else if (x + 1 < 6 && gameBoard[y][x + 1] === currentNumber) {
+                            mergeBlocks(x, y, x + 1, y);
+                            merged = true;
+                        }
+                        // 检查左方是否有相同数字
+                        else if (x - 1 >= 0 && gameBoard[y][x - 1] === currentNumber) {
+                            mergeBlocks(x, y, x - 1, y);
+                            merged = true;
+                        }
+                        // 检查上方是否有相同数字
+                        else if (y - 1 >= 1 && gameBoard[y - 1][x] === currentNumber) {
+                            mergeBlocks(x, y, x, y - 1);
+                            merged = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        function mergeBlocks(x1, y1, x2, y2) {
+            const newNumber = gameBoard[y1][x1] * 2;
+            gameBoard[y1][x1] = newNumber;
+            gameBoard[y2][x2] = 0;
+            
+            // 更新UI
+            updateBlockDisplay(x1, y1, newNumber);
+            removeBlockDisplay(x2, y2);
+            
+            // 加分
+            score += newNumber;
+            document.getElementById('score').textContent = score;
+        }
+        
+        function applyGravity() {
+            let moved = true;
+            
+            // 持续应用重力直到所有方块稳定
+            while (moved) {
+                moved = false;
+                
+                for (let y = 8; y >= 1; y--) { // 从第8行到第1行
+                    for (let x = 0; x < 6; x++) {
+                        if (gameBoard[y][x] !== 0 && gameBoard[y + 1][x] === 0) {
+                            // 方块下落
+                            gameBoard[y + 1][x] = gameBoard[y][x];
+                            gameBoard[y][x] = 0;
+                            
+                            // 更新UI位置
+                            moveBlockDisplay(x, y, x, y + 1);
+                            moved = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        function moveBlockDisplay(fromX, fromY, toX, toY) {
+            const block = findBlockAt(fromX, fromY);
+            if (block) {
+                block.x = toX;
+                block.y = toY;
+                block.element.style.left = (toX * 53) + 'px';
+                // 修复显示位置，减去隐藏行偏移
+                block.element.style.top = ((toY - 1) * 53) + 'px';
+            }
+        }
+        
+        function checkGameOver() {
+            // 检查第1行（可见顶行）是否有方块
+            for (let x = 0; x < 6; x++) {
+                if (gameBoard[1][x] !== 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function updateBlockDisplay(x, y, number) {
+            const block = findBlockAt(x, y);
+            if (block) {
+                block.element.textContent = number;
+                block.element.style.backgroundColor = colors[number] || '#3c3a32';
+                block.element.style.color = number <= 4 ? '#776e65' : 'white';
+                block.number = number;
+                // 确保位置正确
+                block.element.style.left = (x * 53) + 'px';
+                block.element.style.top = ((y - 1) * 53) + 'px';
+            }
+        }
+        
+        function removeBlockDisplay(x, y) {
+            const blockIndex = placedBlocks.findIndex(b => b.x === x && b.y === y);
+            if (blockIndex !== -1) {
+                placedBlocks[blockIndex].element.remove();
+                placedBlocks.splice(blockIndex, 1);
+            }
+        }
+        
+        function findBlockAt(x, y) {
+            return placedBlocks.find(b => b.x === x && b.y === y);
+        }
+        
+        function moveLeft() {
+            if (currentBlock && currentX > 0) {
+                currentX--;
+                updateBlockPosition();
+            }
+        }
+        
+        function moveRight() {
+            if (currentBlock && currentX < 5) {
+                currentX++;
+                updateBlockPosition();
+            }
+        }
+        
+        function drop() {
+            if (dropInterval && currentBlock) {
+                clearInterval(dropInterval);
+                dropSpeed = 50;
+                
+                dropInterval = setInterval(() => {
+                    currentY++;
+                    if (currentBlock) {
+                        currentBlock.style.top = ((currentY - 1) * 53) + 'px';
+                        currentBlock.style.display = currentY >= 1 ? 'flex' : 'none';
+                    }
+                    
+                    if (currentY >= 9 || (currentY < 9 && gameBoard[currentY + 1][currentX] !== 0)) {
+                        clearInterval(dropInterval);
+                        placeBlock();
+                        
+                        setTimeout(() => {
+                            checkMerge();
+                            applyGravity();
+                            
+                            if (checkGameOver()) {
+                                alert('游戏结束！最终分数: ' + score);
+                                restart();
+                                return;
+                            }
+                            
+                            spawnBlock();
+                        }, 100);
+                    }
+                }, dropSpeed);
+            }
+        }
+        
+        function restart() {
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameBoard').innerHTML = '';
+            gameBoard = Array(10).fill().map(() => Array(6).fill(0));
+            placedBlocks = [];
+            if (dropInterval) clearInterval(dropInterval);
+            spawnBlock();
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft': moveLeft(); break;
+                case 'ArrowRight': moveRight(); break;
+                case 'ArrowDown': drop(); break;
+            }
+        });
+        
+        // 启动游戏
+        spawnBlock();
+    </script>
+</body>
+</html>

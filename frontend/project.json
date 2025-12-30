@@ -1,0 +1,30 @@
+{
+  "version": "3.8.0",
+  "name": "NumberDropGame",
+  "settings": {
+    "assets": {
+      "preloadBundles": []
+    },
+    "rendering": {
+      "renderMode": 0
+    },
+    "physics": {
+      "enabled": false
+    },
+    "scripting": {
+      "strictMode": true
+    }
+  },
+  "platforms": {
+    "wechatgame": {
+      "orientation": "portrait",
+      "separateEngine": false
+    },
+    "web-mobile": {
+      "orientation": "portrait"
+    },
+    "web-desktop": {
+      "orientation": "portrait"
+    }
+  }
+}
