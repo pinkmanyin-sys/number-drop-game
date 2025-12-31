@@ -1,27 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const app = express();
+const createApp = require('./src/app');
 
-app.use(cors());
-app.use(express.json());
-
-let scores = [];
-
-app.post('/score', (req, res) => {
-    const { userId, score, timestamp } = req.body;
-    scores.push({ userId, score, timestamp: timestamp || Date.now() });
-    scores.sort((a, b) => b.score - a.score);
-    res.json({ message: 'Score saved successfully' });
-});
-
-app.get('/leaderboard', (req, res) => {
-    res.json(scores.slice(0, 10));
-});
-
+const { app } = createApp();
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`游戏服务器运行在 http://localhost:${PORT}`);
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`游戏服务器运行在 http://0.0.0.0:${PORT}`);
+    console.log(`本地访问: http://localhost:${PORT}`);
+    console.log(`网络访问: http://172.20.10.5:${PORT}`);
     console.log('API 端点:');
+    console.log('  POST /register - 用户注册');
+    console.log('  POST /login - 用户登录');
     console.log('  POST /score - 保存分数');
     console.log('  GET /leaderboard - 获取排行榜');
+    console.log('  GET /user/:userId/stats - 用户统计');
 });

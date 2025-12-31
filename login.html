@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Number Drop Game - Login</title>
+    <style>
+        body { 
+            margin: 0; padding: 20px; font-family: Arial; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .login-container { 
+            background: white; border-radius: 20px; padding: 40px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px; width: 100%;
+        }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #333; margin: 0; font-size: 28px; }
+        .logo p { color: #666; margin: 5px 0 0 0; font-size: 14px; }
+        
+        .lang-selector { text-align: center; margin-bottom: 20px; }
+        .lang-btn { 
+            background: none; border: 1px solid #ddd; padding: 5px 10px; 
+            margin: 0 5px; border-radius: 5px; cursor: pointer;
+        }
+        .lang-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: bold; }
+        .form-group input { 
+            width: 100%; padding: 15px; border: 2px solid #e1e1e1; 
+            border-radius: 10px; font-size: 16px; box-sizing: border-box;
+        }
+        .form-group input:focus { border-color: #667eea; outline: none; }
+        
+        .btn { 
+            width: 100%; padding: 15px; border: none; border-radius: 10px; 
+            font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 15px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:active { background: #5a6fd8; }
+        .btn-secondary { background: #f8f9fa; color: #333; border: 2px solid #e1e1e1; }
+        .btn-secondary:active { background: #e9ecef; }
+        
+        .divider { text-align: center; margin: 30px 0; color: #999; }
+        .social-login { margin-bottom: 15px; }
+        .btn-google { background: #db4437; color: white; }
+        .btn-apple { background: #000; color: white; }
+        
+        .toggle-form { text-align: center; margin-top: 20px; }
+        .toggle-form a { color: #667eea; text-decoration: none; }
+        
+        .global-leaderboard { 
+            background: #f8f9fa; border-radius: 15px; padding: 20px; 
+            margin: 20px 0; border: 2px solid #e1e1e1;
+        }
+        .global-leaderboard h3 { margin: 0 0 15px 0; color: #333; text-align: center; }
+        .leaderboard-preview { max-height: 150px; overflow-y: auto; }
+        .leaderboard-item { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .rank { font-weight: bold; color: #667eea; min-width: 30px; }
+        .player-name { flex: 1; text-align: left; margin-left: 10px; }
+        .player-score { font-weight: bold; color: #333; }
+        .join-hint { 
+            text-align: center; margin: 15px 0 0 0; font-size: 14px; 
+            color: #667eea; font-weight: bold;
+        }
+        .loading { text-align: center; color: #999; padding: 20px; }
+        
+        .hidden { display: none; }
+    </style>
+    <script src="js/lang.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <div class="lang-selector">
+            <button class="lang-btn" onclick="switchLanguage('en')" id="lang-en">EN</button>
+            <button class="lang-btn" onclick="switchLanguage('zh')" id="lang-zh">中文</button>
+        </div>
+        
+        <div class="logo">
+            <h1><span data-lang="app_title">Number Drop Game</span> 🎮</h1>
+            <p>Challenge your reflexes and strategy</p>
+        </div>
+        
+        <!-- Global Leaderboard Preview -->
+        <div class="global-leaderboard">
+            <h3 data-i18n="global_leaderboard">🌍 Global Leaderboard</h3>
+            <div class="leaderboard-preview" id="leaderboardPreview">
+                <div class="loading">Loading...</div>
+            </div>
+            <p class="join-hint" data-i18n="join_competition">Login to join global competition!</p>
+        </div>
+        
+        <!-- 登录表单 -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label data-i18n="username">Username</label>
+                <input type="text" id="loginUsername" data-i18n-placeholder="username">
+            </div>
+            <div class="form-group">
+                <label data-i18n="password">Password</label>
+                <input type="password" id="loginPassword" data-i18n-placeholder="password">
+            </div>
+            <button class="btn btn-primary" onclick="login()" data-i18n="login">Login</button>
+            
+            <div class="divider" data-i18n="or_login_with">Or login with third party</div>
+            
+            <div class="social-login">
+                <button class="btn btn-google" onclick="googleLogin()" data-i18n="google_login">🔍 Google Login</button>
+            </div>
+            <div class="social-login">
+                <button class="btn btn-apple" onclick="appleLogin()" data-i18n="apple_login">🍎 Apple Login</button>
+            </div>
+            <div class="social-login">
+                <button class="btn btn-secondary" onclick="guestLogin()" data-i18n="guest_play">🎮 Try Now</button>
+            </div>
+            
+            <div class="toggle-form">
+                <a href="#" onclick="showRegister()" data-i18n="no_account">Don't have an account? Register now</a>
+            </div>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="hidden">
+            <div class="form-group">
+                <label data-i18n="username">Username</label>
+                <input type="text" id="regUsername" data-i18n-placeholder="username">
+            </div>
+            <div class="form-group">
+                <label data-i18n="nickname">Nickname (Optional)</label>
+                <input type="text" id="regNickname" data-i18n-placeholder="nickname">
+            </div>
+            <div class="form-group">
+                <label data-i18n="password">Password</label>
+                <input type="password" id="regPassword" data-i18n-placeholder="password">
+            </div>
+            <div class="form-group">
+                <label data-i18n="confirm_password">Confirm Password</label>
+                <input type="password" id="regConfirmPassword" data-i18n-placeholder="confirm_password">
+            </div>
+            <button class="btn btn-primary" onclick="register()" data-i18n="register">Register</button>
+            
+            <div class="toggle-form">
+                <a href="#" onclick="showLogin()" data-i18n="have_account">Already have an account? Login now</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://172.20.10.5:3000';
+        
+        function switchLanguage(lang) {
+            window.Lang.setLang(lang);
+            updateLanguageButtons();
+        }
+        
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${window.Lang.currentLang}`).classList.add('active');
+        }
+        
+        // 初始化语言按钮
+        window.addEventListener('load', () => {
+            setTimeout(updateLanguageButtons, 100);
+            loadGlobalLeaderboard();
+        });
+        
+        // 加载全球排行榜预览
+        async function loadGlobalLeaderboard() {
+            try {
+                const response = await fetch(`${API_BASE}/leaderboard?limit=5`);
+                const data = await response.json();
+                
+                if (response.ok && data.leaderboard && data.leaderboard.length > 0) {
+                    displayLeaderboardPreview(data.leaderboard);
+                } else {
+                    document.getElementById('leaderboardPreview').innerHTML = 
+                        '<div class="loading">暂无排行榜数据</div>';
+                }
+            } catch (error) {
+                console.error('加载排行榜失败:', error);
+                document.getElementById('leaderboardPreview').innerHTML = 
+                    '<div class="loading">无法连接服务器</div>';
+            }
+        }
+        
+        function displayLeaderboardPreview(leaderboard) {
+            let html = '';
+            leaderboard.forEach((player, index) => {
+                const rank = index + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+                html += `
+                    <div class="leaderboard-item">
+                        <span class="rank">${medal}</span>
+                        <span class="player-name">${player.nickname || 'Unknown'}</span>
+                        <span class="player-score">${player.score}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('leaderboardPreview').innerHTML = html;
+        }
+        
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+        
+        function showLogin() {
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+        
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('Username and password are required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    localStorage.removeItem('isGuest');
+                    localStorage.setItem('userId', result.userId);
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('nickname', result.nickname || username);
+                    alert('Login successful!');
+                    window.location.href = 'start.html';
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Network error, please check connection');
+            }
+        }
+        
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const nickname = document.getElementById('regNickname').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            if (!username || !password || !confirmPassword) {
+                alert('请填写所有必填字段');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/register?lang=${window.i18n.getApiLanguage()}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, nickname })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(window.i18n.t('register') + '成功！请登录');
+                    showLogin();
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        function guestLogin() {
+            // 设置游客模式
+            localStorage.setItem('isGuest', 'true');
+            localStorage.setItem('userId', 'guest_' + Date.now());
+            localStorage.setItem('username', 'Guest');
+            localStorage.setItem('nickname', '游客');
+            window.location.href = 'game.html'; // 游客直接进入游戏
+        }
+        
+        function googleLogin() {
+            alert('Google登录功能开发中...');
+        }
+        
+        function appleLogin() {
+            alert('Apple登录功能开发中...');
+        }
+        
+        // 检查登录状态
+        if (localStorage.getItem('userId')) {
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+            if (!isGuest) {
+                window.location.href = 'start.html';
+            }
+        }
+    </script>
+</body>
+</html>

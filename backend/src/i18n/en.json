@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "required_fields": "Username and password are required",
+    "username_exists": "Username already exists",
+    "user_not_exists": "User does not exist, please register first",
+    "wrong_password": "Incorrect password",
+    "username_min_length": "Username must be at least 3 characters",
+    "password_min_length": "Password must be at least 6 characters",
+    "user_id_required": "User ID is required",
+    "invalid_score": "Score must be a non-negative number"
+  },
+  "success": {
+    "register_success": "Registration successful",
+    "login_success": "Login successful",
+    "score_saved": "Score saved successfully"
+  },
+  "api": {
+    "title": "Number Drop Game API Server",
+    "endpoints": {
+      "register": "User registration",
+      "login": "User login", 
+      "score": "Save score",
+      "leaderboard": "Get leaderboard",
+      "stats": "User statistics"
+    }
+  }
+}

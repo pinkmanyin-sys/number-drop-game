@@ -2,9 +2,10 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>数字掉落游戏 - v1.0稳定版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>数字掉落游戏 - 测试版</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: Arial; background: #faf8ef; }
+        body { margin: 0; padding: 10px; font-family: Arial; background: #faf8ef; touch-action: manipulation; }
         .game-container { max-width: 400px; margin: 0 auto; text-align: center; }
         .game-board { 
             width: 320px; height: 477px; 
@@ -12,6 +13,7 @@
             margin: 20px auto; 
             position: relative; 
             background: #cdc1b4;
+            touch-action: none;
         }
         .block { 
             position: absolute; 
@@ -23,20 +25,22 @@
         }
         .controls { margin: 20px 0; }
         button { 
-            padding: 10px 20px; margin: 5px; 
-            font-size: 16px; border: none; 
-            border-radius: 6px; cursor: pointer;
+            padding: 15px 25px; margin: 8px; 
+            font-size: 18px; border: none; 
+            border-radius: 8px; cursor: pointer;
             background: #8f7a66; color: white;
+            min-height: 50px;
         }
-        button:hover { background: #9f8a76; }
-        .score { font-size: 24px; font-weight: bold; color: #776e65; }
-        .version { font-size: 12px; color: #999; margin-top: 10px; }
+        button:active { background: #9f8a76; transform: scale(0.95); }
+        .score { font-size: 28px; font-weight: bold; color: #776e65; margin: 15px 0; }
+        .touch-hint { font-size: 14px; color: #999; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>数字掉落游戏</h1>
         <div class="score">分数: <span id="score">0</span></div>
+        <div class="touch-hint">滑动控制方块，点击加速下落</div>
         <div class="game-board" id="gameBoard"></div>
         <div class="controls">
             <button onclick="moveLeft()">←</button>
@@ -44,8 +48,14 @@
             <button onclick="moveRight()">→</button>
             <br>
             <button onclick="restart()">重新开始</button>
+            <button onclick="saveScore()">保存分数</button>
+            <button onclick="showLeaderboard()">排行榜</button>
         </div>
-        <div class="version">v1.0 稳定版</div>
+        <div id="leaderboard" style="margin-top: 20px; display: none;">
+            <h3>排行榜</h3>
+            <div id="leaderboardList"></div>
+            <button onclick="hideLeaderboard()">关闭</button>
+        </div>
     </div>
 
     <script>
@@ -53,10 +63,13 @@
         let currentBlock = null;
         let currentX = 3;
         let currentY = 0;
-        let gameBoard = Array(10).fill().map(() => Array(6).fill(0)); // 10行，第0行隐藏
+        let gameBoard = Array(10).fill().map(() => Array(6).fill(0));
         let placedBlocks = [];
         let dropInterval = null;
         let dropSpeed = 500;
+        let userId = 'player_' + Math.random().toString(36).substr(2, 9);
+        
+        const API_BASE = 'http://172.20.10.5:3000';
         
         const colors = {
             2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 
@@ -126,6 +139,8 @@
                         applyGravity();
                         
                         if (checkGameOver()) {
+                            // 游戏结束时自动保存分数
+                            await autoSaveScore();
                             alert('游戏结束！最终分数: ' + score);
                             restart();
                             return;
@@ -295,11 +310,13 @@
                             checkMerge();
                             applyGravity();
                             
-                            if (checkGameOver()) {
-                                alert('游戏结束！最终分数: ' + score);
-                                restart();
-                                return;
-                            }
+                        if (checkGameOver()) {
+                            // 游戏结束时自动保存分数
+                            await autoSaveScore();
+                            alert('游戏结束！最终分数: ' + score);
+                            restart();
+                            return;
+                        }
                             
                             spawnBlock();
                         }, 100);
@@ -318,6 +335,117 @@
             spawnBlock();
         }
         
+        async function autoSaveScore() {
+            if (score > 0) {
+                try {
+                    const response = await fetch(`${API_BASE}/score`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: userId,
+                            score: score,
+                            timestamp: Date.now()
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('分数自动保存成功');
+                } catch (error) {
+                    console.error('自动保存失败:', error);
+                }
+            }
+        }
+        
+        async function saveScore() {
+            try {
+                const response = await fetch(`${API_BASE}/score`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        score: score,
+                        timestamp: Date.now()
+                    })
+                });
+                
+                const result = await response.json();
+                alert('分数保存成功！');
+            } catch (error) {
+                console.error('保存分数失败:', error);
+                alert('保存失败，请检查后端服务是否启动');
+            }
+        }
+        
+        async function showLeaderboard() {
+            try {
+                const response = await fetch(`${API_BASE}/leaderboard`);
+                const data = await response.json();
+                
+                const leaderboardDiv = document.getElementById('leaderboard');
+                const listDiv = document.getElementById('leaderboardList');
+                
+                listDiv.innerHTML = '';
+                
+                if (data.leaderboard && data.leaderboard.length > 0) {
+                    data.leaderboard.forEach((item, index) => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `${index + 1}. ${item.userId}: ${item.score}分`;
+                        div.style.padding = '5px';
+                        div.style.borderBottom = '1px solid #ccc';
+                        listDiv.appendChild(div);
+                    });
+                } else {
+                    listDiv.innerHTML = '<div>暂无排行榜数据</div>';
+                }
+                
+                leaderboardDiv.style.display = 'block';
+            } catch (error) {
+                console.error('获取排行榜失败:', error);
+                alert('获取排行榜失败，请检查后端服务');
+            }
+        }
+        
+        function hideLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+        
+        // 触摸控制
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        document.getElementById('gameBoard').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        
+        document.getElementById('gameBoard').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 30) {
+                    moveRight();
+                } else if (deltaX < -30) {
+                    moveLeft();
+                }
+            } else {
+                if (deltaY > 30) {
+                    drop();
+                } else if (Math.abs(deltaX) < 20 && Math.abs(deltaY) < 20) {
+                    drop();
+                }
+            }
+        });
+        
         // 键盘控制
         document.addEventListener('keydown', (e) => {
             switch(e.key) {
@@ -327,8 +455,9 @@
             }
         });
         
-        console.log('数字掉落游戏 v1.0 已加载');
+        // 启动游戏
         spawnBlock();
+        console.log('用户ID:', userId);
     </script>
 </body>
 </html>
