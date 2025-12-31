@@ -125,15 +125,28 @@
             2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 
             16: '#f59563', 32: '#f67c5f', 64: '#f65e3b',
             128: '#edcf72', 256: '#edcc61', 512: '#edc850',
-            1024: '#edc53f', 2048: '#edc22e'
+            1024: '#edc53f', 2048: '#edc22e', 4096: '#3c3a32',
+            8192: '#3c3a32', 16384: '#3c3a32', 32768: '#3c3a32'
         };
+        
+        function getBlockColor(number) {
+            return colors[number] || '#3c3a32'; // 黑色作为默认颜色
+        }
         
         function createBlock(number) {
             const block = document.createElement('div');
             block.className = 'block';
             block.textContent = number;
-            block.style.backgroundColor = colors[number] || '#3c3a32';
+            block.style.backgroundColor = getBlockColor(number);
             block.style.color = number <= 4 ? '#776e65' : 'white';
+            // 大数字调整字体大小
+            if (number >= 1000) {
+                block.style.fontSize = '14px';
+            } else if (number >= 100) {
+                block.style.fontSize = '16px';
+            } else {
+                block.style.fontSize = '18px';
+            }
             return block;
         }
         
@@ -181,6 +194,7 @@
                     
                     setTimeout(() => {
                         checkMerge();
+                        // 最后再次应用重力确保没有遗漏
                         applyGravity();
                         
                         if (checkGameOver()) {
@@ -197,6 +211,13 @@
         function placeBlock() {
             if (currentBlock) {
                 const number = parseInt(currentBlock.textContent);
+                
+                // 检查当前位置是否为空
+                if (gameBoard[currentY][currentX] !== 0) {
+                    console.error('试图在非空位置放置方块:', currentY, currentX, '已有:', gameBoard[currentY][currentX]);
+                    return;
+                }
+                
                 gameBoard[currentY][currentX] = number;
                 
                 placedBlocks.push({
@@ -216,34 +237,41 @@
             while (merged) {
                 merged = false;
                 
+                // 从下到上，从左到右扫描
                 for (let y = 9; y >= 1; y--) {
                     for (let x = 0; x < 6; x++) {
                         if (gameBoard[y][x] === 0) continue;
                         
                         const currentNumber = gameBoard[y][x];
                         
+                        // 只检查下方和右方，避免重复合并
                         if (y + 1 < 10 && gameBoard[y + 1][x] === currentNumber) {
                             mergeBlocks(x, y, x, y + 1);
                             merged = true;
+                            break; // 找到一个合并后立即退出，重新扫描
                         }
                         else if (x + 1 < 6 && gameBoard[y][x + 1] === currentNumber) {
                             mergeBlocks(x, y, x + 1, y);
                             merged = true;
+                            break;
                         }
-                        else if (x - 1 >= 0 && gameBoard[y][x - 1] === currentNumber) {
-                            mergeBlocks(x, y, x - 1, y);
-                            merged = true;
-                        }
-                        else if (y - 1 >= 1 && gameBoard[y - 1][x] === currentNumber) {
-                            mergeBlocks(x, y, x, y - 1);
-                            merged = true;
-                        }
+                    }
+                    if (merged) {
+                        // 每次合并后立即应用重力
+                        applyGravity();
+                        break; // 重新开始扫描
                     }
                 }
             }
         }
         
         function mergeBlocks(x1, y1, x2, y2) {
+            // 确保只合并相同数字
+            if (gameBoard[y1][x1] !== gameBoard[y2][x2]) {
+                console.error('Trying to merge different numbers:', gameBoard[y1][x1], gameBoard[y2][x2]);
+                return;
+            }
+            
             const newNumber = gameBoard[y1][x1] * 2;
             gameBoard[y1][x1] = newNumber;
             gameBoard[y2][x2] = 0;
@@ -302,8 +330,16 @@
             const block = findBlockAt(x, y);
             if (block) {
                 block.element.textContent = number;
-                block.element.style.backgroundColor = colors[number] || '#3c3a32';
+                block.element.style.backgroundColor = getBlockColor(number);
                 block.element.style.color = number <= 4 ? '#776e65' : 'white';
+                // 大数字调整字体大小
+                if (number >= 1000) {
+                    block.element.style.fontSize = '14px';
+                } else if (number >= 100) {
+                    block.element.style.fontSize = '16px';
+                } else {
+                    block.element.style.fontSize = '18px';
+                }
                 block.number = number;
                 block.element.style.left = (x * 53) + 'px';
                 block.element.style.top = ((y - 1) * 53) + 'px';
@@ -324,6 +360,14 @@
         
         function moveLeft() {
             if (currentBlock && currentX > 0 && !isPaused) {
+                // 检查左侧当前位置和下方位置是否有障碍物
+                if (currentY > 0 && gameBoard[currentY][currentX - 1] !== 0) {
+                    return;
+                }
+                // 检查移动后下一步是否会碰撞
+                if (currentY + 1 < 10 && gameBoard[currentY + 1][currentX - 1] !== 0) {
+                    return;
+                }
                 currentX--;
                 updateBlockPosition();
             }
@@ -331,6 +375,14 @@
         
         function moveRight() {
             if (currentBlock && currentX < 5 && !isPaused) {
+                // 检查右侧当前位置和下方位置是否有障碍物
+                if (currentY > 0 && gameBoard[currentY][currentX + 1] !== 0) {
+                    return;
+                }
+                // 检查移动后下一步是否会碰撞
+                if (currentY + 1 < 10 && gameBoard[currentY + 1][currentX + 1] !== 0) {
+                    return;
+                }
                 currentX++;
                 updateBlockPosition();
             }
@@ -354,6 +406,7 @@
                         
                         setTimeout(() => {
                             checkMerge();
+                            // 最后再次应用重力确保没有遗漏
                             applyGravity();
                             
                             if (checkGameOver()) {
